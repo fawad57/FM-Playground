@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FM Playground</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container mt-5 mb-5">
+        <div class="text-center mb-4">
+            <h1 class="display-4 fw-bold text-primary">FM Playground</h1>
+            <p class="lead text-muted">A Formal Methods Tool for Program Analysis and Verification</p>
+        </div>
+
+        <div class="card shadow-lg mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Input Program(s)</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-4">
+                        <label for="mode" class="form-label fw-bold">Analysis Mode</label>
+                        <select name="mode" id="mode" class="form-select" onchange="toggleCode2()">
+                            <option value="verify" {% if mode == "verify" %}selected{% endif %}>Verification Mode</option>
+                            <option value="equivalence" {% if mode == "equivalence" %}selected{% endif %}>Equivalence Mode</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="depth" class="form-label fw-bold">Unroll Depth</label>
+                        <input type="number" name="depth" id="depth" class="form-control" min="1" value="{{ depth }}" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="code1" class="form-label fw-bold">Program 1</label>
+                        <textarea name="code1" id="code1" class="form-control" rows="6" placeholder="Enter your program here (e.g., x := 0; while (x < 4) { x := x + 1; })" required>{{ code1 }}</textarea>
+                    </div>
+
+                    <div class="mb-4" id="code2-div" style="display: {% if mode == 'equivalence' %}block{% else %}none{% endif %};">
+                        <label for="code2" class="form-label fw-bold">Program 2 (Equivalence Mode)</label>
+                        <textarea name="code2" id="code2" class="form-control" rows="6" placeholder="Enter second program for equivalence checking" {% if mode == 'equivalence' %}required{% else %}disabled{% endif %}>{{ code2 }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Analyze Program(s)</button>
+                </form>
+            </div>
+        </div>
+
+        {% if result.error %}
+        <div class="alert alert-danger mt-4" role="alert">
+            {{ result.error }}
+        </div>
+        {% endif %}
+
+        {% if result.parsed and not result.error %}
+        <div class="mt-5">
+            <h3 class="mb-4 fw-bold text-center">Analysis Results</h3>
+
+            <ul class="nav nav-tabs mb-3" id="outputTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="ast-tab" data-bs-toggle="tab" data-bs-target="#ast" type="button" role="tab" aria-controls="ast" aria-selected="true">AST</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button" role="tab" aria-controls="parse" aria-selected="false">Parse</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="ssa-tab" data-bs-toggle="tab" data-bs-target="#ssa" type="button" role="tab" aria-controls="ssa" aria-selected="false">SSA</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="smt-tab" data-bs-toggle="tab" data-bs-target="#smt" type="button" role="tab" aria-controls="smt" aria-selected="false">SMT Results</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="counterexamples-tab" data-bs-toggle="tab" data-bs-target="#counterexamples" type="button" role="tab" aria-controls="counterexamples" aria-selected="false">Counterexamples</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="outputTabContent">
+                <div class="tab-pane fade show active" id="ast" role="tabpanel" aria-labelledby="ast-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Abstract Syntax Tree (AST)</h5>
+                            <pre class="output-pre"><code>{{ result.parsed }}</code></pre>
+                            {% if result.dot_file %}
+                            <h5 class="card-title mt-4">AST Graph</h5>
+                            <img src="{{ url_for('static', filename=result.dot_file.split('static/')[1]) }}" alt="AST Graph" class="img-fluid" style="max-width: 100%;">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="parse" role="tabpanel" aria-labelledby="parse-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Unrolled Code</h5>
+                            <pre class="output-pre">{{ result.unrolled }}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="ssa" role="tabpanel" aria-labelledby="ssa-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">SSA Form</h5>
+                            <pre class="output-pre">{{ result.ssa }}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="smt" role="tabpanel" aria-labelledby="smt-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">SMT Verification Results</h5>
+                            <pre class="output-pre">{{ result.smt_result }}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="counterexamples" role="tabpanel" aria-labelledby="counterexamples-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Verification Status: 
+                                <span class="{% if result.status == 'sat' %}text-danger{% elif result.status == 'unsat' %}text-success{% else %}text-warning{% endif %}">
+                                    {{ result.status | upper }}
+                                </span>
+                            </h5>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                {% if result.status == 'sat' %}
+                                    Program does not satisfy the property. Counterexample found:
+                                {% elif result.status == 'unsat' %}
+                                    Program satisfies the property.
+                                {% else %}
+                                    Verification inconclusive.
+                                {% endif %}
+                            </h6>
+                            {% if result.counterexamples %}
+                                <ul class="list-group">
+                                    {% for ce in result.counterexamples %}
+                                        <li class="list-group-item">{{ ce }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No counterexamples available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleCode2() {
+            const mode = document.getElementById('mode').value;
+            const code2Div = document.getElementById('code2-div');
+            const code2Textarea = document.getElementById('code2');
+
+            code2Div.style.display = mode === 'equivalence' ? 'block' : 'none';
+            code2Textarea.required = mode === 'equivalence';
+            code2Textarea.disabled = mode !== 'equivalence';
+        }
+
+        window.onload = function() {
+            toggleCode2();
+        };
+    </script>
+</body>
+</html>

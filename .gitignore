@@ -1,0 +1,30 @@
+# Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+
+# Z3 and temporary files
+output.smt2
+static/*.png
+static/*.dot
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Logs and databases
+*.log
+*.sqlite
+
+# Miscellaneous
+*.swp
+*~

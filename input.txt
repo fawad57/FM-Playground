@@ -1,0 +1,94 @@
+Verification Mode:
+
+Sample Example 1:
+
+n := 5;
+for (i:=0; i<n; i:=i+1) {
+    for (j:=0; j<n-i-1; j:=j+1) {
+        if (arr[j] > arr[j+1]) {
+            temp := arr[j];
+            arr[j] := arr[j+1];
+            arr[j+1] := temp;
+        }
+    }
+}
+
+Sample Exmaple 2:
+
+x:=0;
+while(x < 2) {
+    x:=x+1;
+}
+assert(x == 3)
+
+Sample Exmaple 3:
+
+x:=0;
+y:=0;
+while(x < 5) {
+    x:=x+1;
+    if (x < 3) {
+        y:=y+2;
+    } else {
+        y:=y+1;
+    }
+}
+assert(y == 8)
+
+
+Equivalence Mode:
+
+Sample Example 1:
+
+===Program 1===
+x:=0;
+y:=0;
+while(x < 3) {
+    x:=x+1;
+    while(y < 2) {
+        y:=y+1;
+    }
+}
+
+===Program 2===
+x:=0;
+y:=0;
+while(x < 3) {
+    x:=x+1;
+}
+while(y < 2) {
+    y:=y+1;
+}
+
+
+Sample Example 2:
+
+===Program 1===
+x:=0;
+y:=0;
+z:=0;
+while(x < 3) {
+    x:=x+1;
+    if (x < 2) {
+        y:=y+2;
+        z:=z+1;
+    } else {
+        y:=y+1;
+        z:=z+2;
+    }
+}
+
+===Program 2===
+x:=0;
+y:=0;
+z:=0;
+while(x < 3) {
+    x:=x+1;
+    if (x < 2) {
+        y:=y+1;
+        z:=z+2;
+    } else {
+        y:=y+2;
+        z:=z+1;
+    }
+}
